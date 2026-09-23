@@ -587,9 +587,14 @@ dialog::backdrop{background:rgba(10,12,40,.55)}
   const composite=document.createElement("canvas");
   let outUrl=null, lastBlob=null;
 
+  // 인화 앱의 저해상도 경고를 피하려고 저장 이미지를 2배(3600×2400)로 만들어요.
+  // 칸 좌표는 1800×1200 기준 그대로 쓰고, 캔버스 배율만 키워요.
+  const PRINT_SCALE=2;
   function compose(){
-    composite.width=OUT_W; composite.height=OUT_H;
+    composite.width=OUT_W*PRINT_SCALE; composite.height=OUT_H*PRINT_SCALE;
     const x=composite.getContext("2d");
+    x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high";
+    x.scale(PRINT_SCALE,PRINT_SCALE);
     x.fillStyle="#FFFFFF"; x.fillRect(0,0,OUT_W,OUT_H);
     selected.slots.forEach((s,i)=>{
       const src=shots[i] && shots[i].canvas; if(!src) return;
@@ -599,7 +604,7 @@ dialog::backdrop{background:rgba(10,12,40,.55)}
       x.restore();
     });
     x.drawImage(selected.img,0,0,OUT_W,OUT_H);
-    return new Promise(res=>composite.toBlob(res,"image/png"));
+    return new Promise(res=>composite.toBlob(res,"image/jpeg",0.95));
   }
 
   const RETURN_SECONDS=10;
@@ -623,7 +628,7 @@ dialog::backdrop{background:rgba(10,12,40,.55)}
   function saveImage(auto){
     if(!outUrl) return;
     const a=document.createElement("a");
-    a.href=outUrl; a.download=`4cut_${stamp()}.png`;
+    a.href=outUrl; a.download=`4cut_${stamp()}.jpg`;
     document.body.appendChild(a); a.click(); a.remove();
     doneMsg.textContent = auto
       ? "사진을 자동으로 저장했어요. KODAK Photo Printer 앱에서 인화하세요."
