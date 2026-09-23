@@ -1,0 +1,53 @@
+name: 네컷 부스 배포
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: 프레임 목록 만들기
+        run: |
+          mkdir -p _site
+          for f in *; do
+            case "$f" in frames|_site|README.md) ;; *) cp -r "$f" _site/ ;; esac
+          done
+          mkdir -p _site/frames
+          python3 - <<'PY'
+          import json, os, re, shutil, unicodedata
+          src = "frames"
+          files = sorted(f for f in os.listdir(src) if f.lower().endswith(".png")) if os.path.isdir(src) else []
+          items = []
+          for f in files:
+              shutil.copy(os.path.join(src, f), os.path.join("_site/frames", f))
+              stem = unicodedata.normalize("NFC", os.path.splitext(f)[0])
+              name = re.sub(r"^\d+[_\-\s.]*", "", stem) or stem
+              items.append({"file": f, "name": name})
+          with open("_site/frames/frames.json", "w", encoding="utf-8") as fp:
+              json.dump({"version": os.environ.get("GITHUB_SHA", "local")[:8], "frames": items}, fp, ensure_ascii=False, indent=2)
+          print(f"프레임 {len(items)}개를 등록했어요")
+          PY
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
