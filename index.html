@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>네컷 부스</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3148F5">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gothic+A1:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1FF; --surface:#FFFFFF; --ink:#16163A; --muted:#5B5F86;
+  --accent:#3148F5; --pop:#FF4F98; --line:#D6DBF5; --chip:#F5F6FF;
+  --display:"Do Hyeon","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1130; --surface:#1A1D45; --ink:#EEF0FF; --muted:#A3A8D6;
+    --accent:#8391FF; --pop:#FF6FAE; --line:#2E3270; --chip:#232757; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1130; --surface:#1A1D45; --ink:#EEF0FF; --muted:#A3A8D6;
+  --accent:#8391FF; --pop:#FF6FAE; --line:#2E3270; --chip:#232757; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.55;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
+button,input{font:inherit;color:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:1280px;margin:0 auto;padding:clamp(14px,2.5vw,28px)}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:clamp(12px,2vw,20px)}
+.top h1{font-family:var(--display);font-weight:400;font-size:clamp(32px,4.5vw,48px);line-height:1;margin:0}
+.top .sp{flex:1}
+.lead{font-family:var(--display);font-size:clamp(24px,3.2vw,34px);margin:0 0 4px;line-height:1.2}
+.sub{margin:0 0 18px;color:var(--muted)}
+
+.btn{border:0;border-radius:999px;padding:12px 22px;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}
+.btn.ghost{background:var(--chip);color:var(--ink);border:1.5px solid var(--line)}
+.btn.small{padding:8px 14px;font-size:14px}
+.btn.big{font-family:var(--display);font-weight:400;font-size:30px;padding:16px 48px;background:var(--pop)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* frame picker */
+.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:16px}
+.frame-card{border:3px solid transparent;background:var(--surface);border-radius:18px;padding:10px;cursor:pointer;text-align:left}
+.frame-card:hover{border-color:var(--line)}
+.frame-card img{display:block;width:100%;aspect-ratio:3/2;object-fit:contain;border-radius:8px;background:repeating-conic-gradient(var(--line) 0 25%,var(--chip) 0 50%) 0 0/20px 20px}
+.frame-card span{display:block;margin-top:8px;font-weight:800}
+.frame-card small{color:var(--muted)}
+.empty-note{background:var(--surface);border:1.5px dashed var(--line);border-radius:18px;padding:18px;color:var(--muted);margin-top:16px}
+
+/* shooting */
+.shoot-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-bottom:12px}
+.shoot-head p{margin:0;font-weight:600}
+.stage{position:relative;margin:0 auto;border-radius:22px;overflow:hidden;background:#07081c;aspect-ratio:3/2}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage video.mirror{transform:scaleX(-1)}
+.cam-empty{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:12px;padding:24px;text-align:center;color:#E8EAFF}
+.cam-empty p{margin:0;max-width:36ch;font-size:15px;color:#C3C7EE}
+.count{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+  font-family:var(--display);font-size:clamp(130px,24vw,260px);color:#fff;line-height:1;text-shadow:0 6px 30px rgba(0,0,0,.45)}
+.count.tick{animation:tick .9s ease-out}
+@keyframes tick{0%{transform:scale(1.35);opacity:0}25%{opacity:1}100%{transform:scale(.9);opacity:.85}}
+.shotno{position:absolute;left:14px;top:14px;padding:6px 14px;border-radius:999px;background:rgba(7,8,28,.62);color:#fff;font-weight:800}
+.shotno:empty{display:none}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+.flash.on{opacity:.95;transition:none}
+.progress{display:flex;justify-content:center;gap:10px;margin:14px 0 0}
+.dot{width:64px;aspect-ratio:3/4;border-radius:10px;border:2px dashed var(--line);background:var(--chip);overflow:hidden;
+  display:grid;place-items:center;font-family:var(--display);font-size:22px;color:var(--muted)}
+.dot img{width:100%;height:100%;object-fit:cover}
+.dot.now{border:3px solid var(--pop)}
+.dot.filled{border-style:solid;border-color:transparent}
+.center{display:flex;justify-content:center;margin-top:18px}
+
+/* result */
+.print{display:grid;place-items:center;overflow:hidden;padding:6px 0 20px}
+.print img{display:block;max-height:64vh;width:auto;box-shadow:0 22px 40px -22px rgba(16,18,60,.55)}
+.print.printed img{animation:printout .9s cubic-bezier(.2,.8,.2,1)}
+@keyframes printout{from{transform:translateY(-30%);clip-path:inset(100% 0 0 0)}to{transform:none;clip-path:inset(0 0 0 0)}}
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.msg{margin:12px auto 0;text-align:center;color:var(--muted);max-width:52ch;min-height:1.5em}
+
+/* admin */
+dialog{border:0;border-radius:22px;padding:0;width:min(720px,94vw);max-height:90vh;background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(10,12,40,.55)}
+.admin{padding:22px}
+.admin h2{font-family:var(--display);font-weight:400;font-size:30px;margin:0 0 6px}
+.admin h3{font-size:16px;margin:22px 0 8px}
+.admin p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.upload{position:relative;overflow:hidden;display:inline-block}
+.upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.flist{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+.flist li{display:grid;grid-template-columns:120px 1fr auto;gap:12px;align-items:center;background:var(--chip);border-radius:14px;padding:8px}
+.flist img{width:120px;aspect-ratio:3/2;object-fit:contain;border-radius:6px;background:repeating-conic-gradient(var(--line) 0 25%,var(--surface) 0 50%) 0 0/14px 14px}
+.flist b{display:block;word-break:break-all}
+.flist small{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips input{position:absolute;opacity:0;width:1px;height:1px}
+.chips label{padding:7px 14px;border-radius:999px;background:var(--chip);border:1.5px solid var(--line);font-size:14px;cursor:pointer}
+.chips input:checked+label{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}
+.chips input:focus-visible+label{outline:3px solid var(--accent);outline-offset:2px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:10px}
+.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+.admin-foot{display:flex;justify-content:flex-end;margin-top:22px}
+.admin .msg{text-align:left;margin:10px 0 0}
+
+@media (prefers-reduced-motion:reduce){
+  .count.tick,.print.printed img{animation:none}
+  .flash.on{opacity:.5}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>네컷 부스</h1>
+    <span class="sp"></span>
+    <button class="btn small" id="installBtn" type="button" hidden>앱으로 설치</button>
+    <button class="btn ghost small" id="adminBtn" type="button">프레임 관리</button>
+  </header>
+
+  <!-- 1. 프레임 고르기 -->
+  <section id="scrChoose">
+    <p class="lead">마음에 드는 프레임을 골라 주세요</p>
+    <p class="sub">고르면 바로 촬영 화면으로 넘어가요. 한 컷마다 5초씩, 네 컷이 자동으로 이어서 찍혀요.</p>
+    <div class="frames" id="frameGrid"></div>
+    <div class="empty-note" id="builtinNote" hidden>지금은 기본 프레임만 있어요. 오른쪽 위 ‘프레임 관리’에서 직접 만든 프레임을 올리면 이 자리에 나타나요.</div>
+  </section>
+
+  <!-- 2. 촬영 -->
+  <section id="scrShoot" hidden>
+    <div class="shoot-head">
+      <button class="btn ghost small" id="backBtn" type="button">프레임 다시 고르기</button>
+      <button class="btn ghost small" id="flipBtn" type="button">후면 카메라로 전환</button>
+      <p id="shootStatus" aria-live="polite">자리를 잡고 ‘촬영 시작’을 누르세요.</p>
+    </div>
+    <div class="stage" id="stage">
+      <video id="video" playsinline muted autoplay></video>
+      <div class="cam-empty" id="camEmpty">
+        <button class="btn" id="camRetry" type="button">카메라 켜기</button>
+        <p id="camMsg">태블릿을 세워 두고 모두의 얼굴이 화면에 들어오게 맞춰 주세요.</p>
+      </div>
+      <div class="count" id="count" aria-live="assertive"></div>
+      <div class="shotno" id="shotno"></div>
+      <div class="flash" id="flash"></div>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div class="center"><button class="btn big" id="startBtn" type="button">촬영 시작</button></div>
+  </section>
+
+  <!-- 3. 완성 -->
+  <section id="scrDone" hidden>
+    <p class="lead" style="text-align:center">완성됐어요!</p>
+    <div class="print" id="print"><img id="out" alt="완성된 네컷 사진"></div>
+    <div class="row">
+      <button class="btn ghost" id="saveBtn" type="button">다시 저장</button>
+      <button class="btn" id="againBtn" type="button">지금 처음으로</button>
+    </div>
+    <p class="msg" id="doneMsg" aria-live="polite"></p>
+    <p class="msg" id="returnMsg" aria-live="polite"></p>
+  </section>
+</div>
+
+<dialog id="admin">
+  <div class="admin">
+    <h2>프레임 관리</h2>
+    <p>프레임은 가로 1800×1200px(6×4인치, 300dpi) PNG로 만들고, 사진이 들어갈 칸을 투명하게 비워 주세요. 투명한 칸을 자동으로 찾아서 왼쪽 위부터 순서대로 사진을 채워요.</p>
+    <label class="btn ghost upload">이 기기에만 임시로 올리기
+      <input id="frameUpload" type="file" accept="image/png" multiple>
+    </label>
+    <p class="msg" id="adminMsg" aria-live="polite"></p>
+    <ul class="flist" id="frameList"></ul>
+
+    <h3>모든 기기에 적용하기</h3>
+    <p>모든 기기에서 쓸 프레임은 GitHub 저장소의 <b>frames</b> 폴더에 PNG를 올리면 1~2분 뒤 자동으로 반영돼요. 파일 이름이 프레임 이름이 되고, 이름 앞에 01_, 02_를 붙이면 그 순서대로 보여요. 위에서 올린 프레임은 이 기기에서만 쓰는 임시 프레임이에요.</p>
+
+    <h3>카메라</h3>
+    <div class="chips" role="radiogroup" aria-label="카메라">
+      <input type="radio" name="facing" id="fUser" value="user"><label for="fUser">전면 카메라</label>
+      <input type="radio" name="facing" id="fEnv" value="environment"><label for="fEnv">후면 카메라</label>
+    </div>
+    <label class="toggle"><input type="checkbox" id="mirrorIn"> 거울처럼 좌우 반전해서 찍기</label>
+
+    <div class="admin-foot"><button class="btn" id="adminClose" type="button">닫기</button></div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  const OUT_W=1800, OUT_H=1200, SHOT_SECONDS=5;
+  const $=id=>document.getElementById(id);
+  const scr={choose:$("scrChoose"), shoot:$("scrShoot"), done:$("scrDone")};
+  const video=$("video"), stage=$("stage"), camEmpty=$("camEmpty"), camMsg=$("camMsg"), countEl=$("count"),
+        shotno=$("shotno"), flashEl=$("flash"), progress=$("progress"), startBtn=$("startBtn"), backBtn=$("backBtn"),
+        shootStatus=$("shootStatus"), out=$("out"), printEl=$("print"), saveBtn=$("saveBtn"), againBtn=$("againBtn"),
+        doneMsg=$("doneMsg"), returnMsg=$("returnMsg"), frameGrid=$("frameGrid"), builtinNote=$("builtinNote"), admin=$("admin"),
+        frameList=$("frameList"), adminMsg=$("adminMsg"), mirrorIn=$("mirrorIn"), flipBtn=$("flipBtn");
+
+  // ---------- settings (per device)
+  const settings={facing:"user", mirror:true};
+  try{ Object.assign(settings, JSON.parse(localStorage.getItem("booth-settings")||"{}")); }catch(e){}
+  function saveSettings(){ try{ localStorage.setItem("booth-settings", JSON.stringify(settings)); }catch(e){} }
+
+  // ---------- IndexedDB for frames
+  let dbp=null;
+  function idb(){
+    if(!dbp) dbp=new Promise((res,rej)=>{
+      if(!window.indexedDB) return rej(new Error("no idb"));
+      const r=indexedDB.open("four-cut-booth",1);
+      r.onupgradeneeded=()=>r.result.createObjectStore("frames",{keyPath:"id"});
+      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+    });
+    return dbp;
+  }
+  async function idbReq(mode, fn){
+    const db=await idb();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction("frames",mode); const q=fn(tx.objectStore("frames"));
+      tx.oncomplete=()=>res(q && q.result); tx.onerror=()=>rej(tx.error);
+    });
+  }
+  const idbAll=()=>idbReq("readonly",s=>s.getAll());
+  const idbPut=rec=>idbReq("readwrite",s=>s.put(rec));
+  const idbDel=id=>idbReq("readwrite",s=>s.delete(id));
+
+  // ---------- frames
+  let userFrames=[], builtin=null, selected=null;
+
+  function loadImage(src){
+    return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; });
+  }
+  function thumbOf(src){
+    const c=document.createElement("canvas"); c.width=480; c.height=320;
+    c.getContext("2d").drawImage(src,0,0,480,320); return c.toDataURL("image/png");
+  }
+
+  function makeBuiltin(){
+    const c=document.createElement("canvas"); c.width=OUT_W; c.height=OUT_H;
+    const x=c.getContext("2d");
+    x.fillStyle="#FFFFFF"; x.fillRect(0,0,OUT_W,OUT_H);
+    const pad=60, gap=36, top=60, textH=190;
+    const w=(OUT_W-pad*2-gap)/2, h=(OUT_H-top-textH-gap)/2;
+    const slots=[];
+    for(let r=0;r<2;r++) for(let col=0;col<2;col++){
+      const s={x:Math.round(pad+col*(w+gap)), y:Math.round(top+r*(h+gap)), w:Math.round(w), h:Math.round(h)};
+      slots.push(s); x.clearRect(s.x,s.y,s.w,s.h);
+    }
+    x.fillStyle="#16163A"; x.textAlign="center"; x.textBaseline="middle";
+    x.font='96px "Do Hyeon","Apple SD Gothic Neo",sans-serif';
+    x.fillText("네컷 부스", OUT_W/2, OUT_H-textH/2+6);
+    return {id:"builtin", name:"기본 프레임", img:c, slots, thumb:thumbOf(c), builtin:true};
+  }
+
+  function detectSlots(img){
+    const c=document.createElement("canvas"); c.width=OUT_W; c.height=OUT_H;
+    const x=c.getContext("2d",{willReadFrequently:true});
+    x.drawImage(img,0,0,OUT_W,OUT_H);
+    const data=x.getImageData(0,0,OUT_W,OUT_H).data;
+    const S=4, gw=OUT_W/S, gh=OUT_H/S;
+    const mask=new Uint8Array(gw*gh);
+    for(let gy=0;gy<gh;gy++) for(let gx=0;gx<gw;gx++){
+      mask[gy*gw+gx] = data[((gy*S+2)*OUT_W+(gx*S+2))*4+3] < 128 ? 1 : 0;
+    }
+    const seen=new Uint8Array(gw*gh), comps=[], minArea=gw*gh*0.008;
+    for(let i=0;i<mask.length;i++){
+      if(!mask[i]||seen[i]) continue;
+      let count=0, minx=gw, miny=gh, maxx=0, maxy=0; const stack=[i]; seen[i]=1;
+      while(stack.length){
+        const p=stack.pop(), px=p%gw, py=(p-px)/gw; count++;
+        if(px<minx)minx=px; if(px>maxx)maxx=px; if(py<miny)miny=py; if(py>maxy)maxy=py;
+        if(px>0&&mask[p-1]&&!seen[p-1]){seen[p-1]=1;stack.push(p-1);}
+        if(px<gw-1&&mask[p+1]&&!seen[p+1]){seen[p+1]=1;stack.push(p+1);}
+        if(py>0&&mask[p-gw]&&!seen[p-gw]){seen[p-gw]=1;stack.push(p-gw);}
+        if(py<gh-1&&mask[p+gw]&&!seen[p+gw]){seen[p+gw]=1;stack.push(p+gw);}
+      }
+      if(count>=minArea){
+        const sx=Math.max(0,minx*S-S), sy=Math.max(0,miny*S-S);
+        comps.push({x:sx, y:sy, w:Math.min(OUT_W,(maxx+1)*S+S)-sx, h:Math.min(OUT_H,(maxy+1)*S+S)-sy});
+      }
+    }
+    // reading order: rows top→bottom, then left→right
+    comps.sort((a,b)=>(a.y+a.h/2)-(b.y+b.h/2));
+    const rows=[];
+    comps.forEach(s=>{
+      const cy=s.y+s.h/2, last=rows[rows.length-1];
+      if(last && Math.abs(cy-last.cy) < Math.min(s.h,last.h)*0.5) last.items.push(s);
+      else rows.push({cy, h:s.h, items:[s]});
+    });
+    return rows.flatMap(r=>r.items.sort((a,b)=>a.x-b.x));
+  }
+
+  async function hydrate(rec){
+    const url=URL.createObjectURL(new Blob([rec.data],{type:rec.type||"image/png"}));
+    const img=await loadImage(url);
+    return {id:rec.id, name:rec.name, img, slots:rec.slots, thumb:rec.thumb, data:rec.data, builtin:false};
+  }
+
+  // 모든 기기 공용 프레임: 사이트에 함께 올린 frames/frames.json
+  let sharedFrames=[];
+  async function loadShared(){
+    try{
+      const r=await fetch(new URL("frames/frames.json", location.href), {cache:"no-store"});
+      if(!r.ok) return;
+      const j=await r.json(); const v=encodeURIComponent(j.version||"");
+      const list=[];
+      for(const it of (j.frames||[])){
+        try{
+          const src=new URL(`frames/${encodeURIComponent(it.file)}?v=${v}`, location.href).href;
+          const img=await loadImage(src);
+          const slots=(it.slots&&it.slots.length)?it.slots:detectSlots(img);
+          list.push({id:"s:"+it.file, name:it.name||it.file, img, slots, thumb:thumbOf(img), src, shared:true});
+        }catch(e){}
+      }
+      sharedFrames=list;
+    }catch(e){}
+  }
+
+  async function loadFrames(){
+    await loadShared();
+    try{
+      const recs=(await idbAll())||[];
+      recs.sort((a,b)=>a.createdAt-b.createdAt);
+      userFrames=[];
+      for(const r of recs){ try{ userFrames.push(await hydrate(r)); }catch(e){} }
+    }catch(e){
+      adminMsg.textContent="이 화면에서는 프레임을 기기에 보관할 수 없어요. 올린 프레임은 페이지를 닫으면 사라져요.";
+    }
+    renderFrames();
+  }
+
+  // 이 기기에서 올린 프레임이 같은 이름의 공용 프레임보다 우선
+  function activeFrames(){
+    const localNames=new Set(userFrames.map(f=>f.name));
+    return [...sharedFrames.filter(f=>!localNames.has(f.name)), ...userFrames];
+  }
+  function visibleFrames(){ const a=activeFrames(); return a.length ? a : [builtin]; }
+
+  function listRow(f, badge, btnLabel, onClick){
+    const li=document.createElement("li");
+    li.innerHTML=`<img alt=""><div><b></b><small></small></div><button class="btn ghost small" type="button"></button>`;
+    li.querySelector("img").src=f.thumb;
+    li.querySelector("b").textContent=f.name;
+    li.querySelector("small").textContent=`사진 칸 ${f.slots.length}개 · ${badge}`;
+    const b=li.querySelector("button");
+    if(btnLabel){ b.textContent=btnLabel; b.addEventListener("click",onClick); } else b.remove();
+    frameList.appendChild(li);
+  }
+
+  function renderFrames(){
+    frameGrid.innerHTML="";
+    visibleFrames().forEach(f=>{
+      const b=document.createElement("button");
+      b.type="button"; b.className="frame-card";
+      b.innerHTML=`<img alt=""><span></span><small>사진 ${f.slots.length}컷</small>`;
+      b.querySelector("img").src=f.thumb;
+      b.querySelector("span").textContent=f.name;
+      b.addEventListener("click",()=>chooseFrame(f));
+      frameGrid.appendChild(b);
+    });
+    builtinNote.hidden = activeFrames().length>0;
+
+    frameList.innerHTML="";
+    if(!sharedFrames.length && !userFrames.length){
+      const li=document.createElement("li"); li.style.gridTemplateColumns="1fr";
+      li.innerHTML="<small>아직 등록된 프레임이 없어요. 올리기 전까지는 기본 프레임이 손님 화면에 보여요.</small>";
+      frameList.appendChild(li);
+    }
+    const localNames=new Set(userFrames.map(f=>f.name));
+    sharedFrames.forEach(f=>{
+      listRow(f, localNames.has(f.name) ? "모든 기기 · 이 기기의 같은 이름 임시 프레임으로 대체 중" : "모든 기기 (GitHub에서 관리)", null, null);
+    });
+    userFrames.forEach(f=>{
+      listRow(f, "이 기기에만 저장(임시)", "삭제", async()=>{
+        if(!confirm(`‘${f.name}’ 프레임을 이 기기에서 삭제할까요?`)) return;
+        try{ await idbDel(f.id); }catch(e){}
+        userFrames=userFrames.filter(x=>x!==f); renderFrames();
+        adminMsg.textContent="프레임을 삭제했어요.";
+      });
+    });
+  }
+
+  $("frameUpload").addEventListener("change", async e=>{
+    const files=[...e.target.files]; e.target.value="";
+    const notes=[];
+    for(const file of files){
+      const name=file.name.replace(/\.[^.]+$/,"");
+      const url=URL.createObjectURL(file);
+      try{
+        const img=await loadImage(url);
+        const ratio=img.naturalWidth/img.naturalHeight;
+        if(Math.abs(ratio-1.5)>0.03){ notes.push(`‘${name}’: 가로 3:2 비율(1800×1200px)이 아니라서 올리지 않았어요.`); continue; }
+        const slots=detectSlots(img);
+        if(!slots.length){ notes.push(`‘${name}’: 투명한 사진 칸을 찾지 못했어요. 사진 자리를 투명하게 비운 PNG인지 확인해 주세요.`); continue; }
+        if(slots.length>8){ notes.push(`‘${name}’: 투명한 칸이 ${slots.length}개로 너무 많아요. 사진 칸 외의 투명 영역을 채워 주세요.`); continue; }
+        const rec={id:"f"+Date.now()+Math.random().toString(36).slice(2,7), name, type:"image/png",
+                   data:await file.arrayBuffer(), slots, thumb:thumbOf(img), createdAt:Date.now()};
+        try{ await idbPut(rec); }catch(err){}
+        userFrames=userFrames.filter(x=>x.name!==name || (idbDel(x.id).catch(()=>{}), false));
+        userFrames.push({id:rec.id, name, img, slots, thumb:rec.thumb, data:rec.data, builtin:false});
+        notes.push(`‘${name}’: 사진 칸 ${slots.length}개를 찾아 추가했어요.`);
+      }catch(err){
+        notes.push(`‘${name}’: 이미지를 읽지 못했어요.`);
+      }
+    }
+    adminMsg.textContent=notes.join(" ");
+    renderFrames();
+  });
+
+  // ---------- admin dialog
+  $("adminBtn").addEventListener("click",()=>{
+    if(running) return;
+    $(settings.facing==="user"?"fUser":"fEnv").checked=true;
+    mirrorIn.checked=settings.mirror;
+    admin.showModal();
+  });
+  $("adminClose").addEventListener("click",()=>admin.close());
+  document.querySelectorAll('input[name="facing"]').forEach(r=>r.addEventListener("change",()=>{
+    settings.facing=r.value; settings.mirror = r.value==="user"; mirrorIn.checked=settings.mirror;
+    saveSettings(); applyMirror(); updateFlip(); if(stream) startCamera();
+  }));
+  mirrorIn.addEventListener("change",()=>{ settings.mirror=mirrorIn.checked; saveSettings(); applyMirror(); });
+  function applyMirror(){ video.classList.toggle("mirror", settings.mirror); }
+
+  // ---------- screens
+  function show(name){
+    Object.entries(scr).forEach(([k,el])=>el.hidden = k!==name);
+    $("adminBtn").hidden = name!=="choose";
+    $("installBtn").hidden = name!=="choose" || !installPrompt;
+    window.scrollTo(0,0);
+  }
+
+  // ---------- camera
+  let stream=null;
+  async function startCamera(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      camEmpty.hidden=false; camMsg.textContent="이 화면에서는 카메라를 열 수 없어요. 태블릿의 Chrome이나 Safari에서 열어 주세요."; return false;
+    }
+    stopCamera(); camEmpty.hidden=false; camMsg.textContent="카메라를 여는 중…";
+    try{
+      stream=await openStream();
+      video.srcObject=stream; await video.play().catch(()=>{});
+      camEmpty.hidden=true; updateFlip(); return true;
+    }catch(err){
+      camMsg.textContent = err && err.name==="NotAllowedError"
+        ? "카메라 권한이 막혀 있어요. 브라우저 설정에서 카메라를 허용한 뒤 다시 누르세요."
+        : "카메라를 열지 못했어요. 다른 앱이 카메라를 쓰고 있지 않은지 확인해 주세요.";
+      return false;
+    }
+  }
+  // 전면/후면 선택: facingMode exact → 장치 이름으로 찾기 → 기본값 순서로 시도
+  async function openStream(){
+    const md=navigator.mediaDevices, base={width:{ideal:1920},height:{ideal:1440}};
+    try{
+      return await md.getUserMedia({video:{...base, facingMode:{exact:settings.facing}}, audio:false});
+    }catch(err){
+      if(err && err.name==="NotAllowedError") throw err;
+      try{
+        const devs=(await md.enumerateDevices()).filter(d=>d.kind==="videoinput");
+        const want = settings.facing==="environment" ? /back|rear|environment|후면/i : /front|user|전면/i;
+        const dev=devs.find(d=>want.test(d.label));
+        if(dev) return await md.getUserMedia({video:{...base, deviceId:{exact:dev.deviceId}}, audio:false});
+      }catch(e){ if(e && e.name==="NotAllowedError") throw e; }
+      return await md.getUserMedia({video:{...base, facingMode:settings.facing}, audio:false});
+    }
+  }
+  function updateFlip(){
+    flipBtn.textContent = settings.facing==="user" ? "후면 카메라로 전환" : "전면 카메라로 전환";
+    flipBtn.hidden = running;
+  }
+  async function switchCamera(){
+    if(running) return;
+    settings.facing = settings.facing==="user" ? "environment" : "user";
+    settings.mirror = settings.facing==="user";
+    mirrorIn.checked=settings.mirror; saveSettings(); applyMirror();
+    const r=document.getElementById(settings.facing==="user"?"fUser":"fEnv"); if(r) r.checked=true;
+    flipBtn.disabled=true;
+    const ok=await startCamera();
+    flipBtn.disabled=false; updateFlip();
+    if(ok){
+      let actual="";
+      try{ actual=(stream.getVideoTracks()[0].getSettings().facingMode)||""; }catch(e){}
+      shootStatus.textContent = actual && actual!==settings.facing
+        ? "이 기기에서 다른 카메라를 찾지 못했어요."
+        : (settings.facing==="user" ? "전면 카메라로 바꿨어요." : "후면 카메라로 바꿨어요.");
+    }
+  }
+  flipBtn.addEventListener("click", switchCamera);
+
+  function stopCamera(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+  $("camRetry").addEventListener("click", startCamera);
+
+  function setStageFor(slot){
+    const ar=slot.w/slot.h;
+    stage.style.aspectRatio=`${slot.w} / ${slot.h}`;
+    stage.style.width=`min(100%, calc(64vh * ${ar.toFixed(4)}))`;
+  }
+
+  // ---------- session
+  let shots=[], running=false, wakeLock=null;
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+  function renderProgress(current){
+    progress.innerHTML="";
+    selected.slots.forEach((s,i)=>{
+      const d=document.createElement("div"); d.className="dot";
+      d.style.aspectRatio=`${s.w} / ${s.h}`;
+      if(shots[i]){ d.classList.add("filled"); const im=new Image(); im.src=shots[i].thumb; im.alt=""; d.appendChild(im); }
+      else d.textContent=i+1;
+      if(i===current) d.classList.add("now");
+      progress.appendChild(d);
+    });
+  }
+
+  async function chooseFrame(f){
+    selected=f; shots=[];
+    applyMirror(); setStageFor(f.slots[0]); renderProgress(-1);
+    startBtn.hidden=false; backBtn.hidden=false; updateFlip();
+    shootStatus.textContent=`자리를 잡고 ‘촬영 시작’을 누르세요. ${f.slots.length}컷을 한 컷마다 ${SHOT_SECONDS}초 뒤 자동으로 찍어요.`;
+    show("shoot");
+    if(!stream) await startCamera();
+  }
+  backBtn.addEventListener("click",()=>{ if(!running) show("choose"); });
+
+  function capture(){
+    const vw=video.videoWidth, vh=video.videoHeight; if(!vw) return null;
+    const scale=Math.min(1,1920/Math.max(vw,vh));
+    const c=document.createElement("canvas"); c.width=Math.round(vw*scale); c.height=Math.round(vh*scale);
+    const x=c.getContext("2d");
+    if(settings.mirror){ x.translate(c.width,0); x.scale(-1,1); }
+    x.drawImage(video,0,0,c.width,c.height);
+    const t=document.createElement("canvas"); t.width=160; t.height=Math.round(160*c.height/c.width);
+    t.getContext("2d").drawImage(c,0,0,t.width,t.height);
+    return {canvas:c, thumb:t.toDataURL("image/jpeg",.7)};
+  }
+  function flash(){ flashEl.classList.add("on"); requestAnimationFrame(()=>requestAnimationFrame(()=>flashEl.classList.remove("on"))); }
+
+  startBtn.addEventListener("click", async ()=>{
+    if(running) return;
+    if(!stream || !video.videoWidth){ const ok=await startCamera(); if(!ok) return; await wait(500); }
+    runSession();
+  });
+
+  async function runSession(){
+    running=true; shots=[]; startBtn.hidden=true; backBtn.hidden=true; flipBtn.hidden=true;
+    try{ if(navigator.wakeLock) wakeLock=await navigator.wakeLock.request("screen"); }catch(e){}
+    const n=selected.slots.length;
+    for(let i=0;i<n;i++){
+      setStageFor(selected.slots[i]); renderProgress(i);
+      shotno.textContent=`${i+1} / ${n}`;
+      shootStatus.textContent=`${i+1}번째 컷 · ${SHOT_SECONDS}초 뒤에 찍혀요`;
+      for(let s=SHOT_SECONDS;s>0;s--){
+        countEl.textContent=s; countEl.classList.remove("tick"); void countEl.offsetWidth; countEl.classList.add("tick");
+        await wait(1000);
+      }
+      countEl.textContent="";
+      const shot=capture();
+      if(!shot){ endWithError(); return; }
+      shots[i]=shot; flash(); renderProgress(i);
+      await wait(500);
+    }
+    shotno.textContent=""; shootStatus.textContent="사진을 합치는 중…";
+    await finish();
+  }
+
+  function endWithError(){
+    running=false; countEl.textContent=""; shotno.textContent="";
+    releaseWake();
+    shootStatus.textContent="카메라 화면이 끊겨서 촬영을 이어갈 수 없어요. 카메라를 다시 켠 뒤 처음부터 촬영해 주세요.";
+    shots=[]; renderProgress(-1); setStageFor(selected.slots[0]);
+    startBtn.hidden=false; backBtn.hidden=false; updateFlip(); camEmpty.hidden=false; camMsg.textContent="카메라를 다시 켜 주세요.";
+  }
+  function releaseWake(){ try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock=null; }
+
+  // ---------- compose & save
+  const composite=document.createElement("canvas");
+  let outUrl=null, lastBlob=null;
+
+  function compose(){
+    composite.width=OUT_W; composite.height=OUT_H;
+    const x=composite.getContext("2d");
+    x.fillStyle="#FFFFFF"; x.fillRect(0,0,OUT_W,OUT_H);
+    selected.slots.forEach((s,i)=>{
+      const src=shots[i] && shots[i].canvas; if(!src) return;
+      const k=Math.max(s.w/src.width, s.h/src.height), w=src.width*k, h=src.height*k;
+      x.save(); x.beginPath(); x.rect(s.x,s.y,s.w,s.h); x.clip();
+      x.drawImage(src, s.x+(s.w-w)/2, s.y+(s.h-h)/2, w, h);
+      x.restore();
+    });
+    x.drawImage(selected.img,0,0,OUT_W,OUT_H);
+    return new Promise(res=>composite.toBlob(res,"image/png"));
+  }
+
+  const RETURN_SECONDS=10;
+  let returnTimer=null;
+
+  async function finish(){
+    lastBlob=await compose();
+    running=false; releaseWake();
+    if(outUrl) URL.revokeObjectURL(outUrl);
+    outUrl=URL.createObjectURL(lastBlob); out.src=outUrl;
+    show("done");
+    printEl.classList.remove("printed"); void printEl.offsetWidth; printEl.classList.add("printed");
+    saveImage(true);
+    startReturn();
+  }
+
+  function stamp(){
+    const d=new Date(), z=n=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`;
+  }
+  function saveImage(auto){
+    if(!outUrl) return;
+    const a=document.createElement("a");
+    a.href=outUrl; a.download=`4cut_${stamp()}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    doneMsg.textContent = auto
+      ? "사진을 자동으로 저장했어요. KODAK Photo Printer 앱에서 인화하세요."
+      : "다시 저장했어요.";
+  }
+
+  function startReturn(){
+    clearInterval(returnTimer);
+    let left=RETURN_SECONDS;
+    returnMsg.textContent=`${left}초 뒤 처음 화면으로 돌아가요.`;
+    returnTimer=setInterval(()=>{
+      left--;
+      if(left<=0) goHome();
+      else returnMsg.textContent=`${left}초 뒤 처음 화면으로 돌아가요.`;
+    },1000);
+  }
+  function goHome(){
+    clearInterval(returnTimer); returnTimer=null;
+    shots=[]; lastBlob=null; returnMsg.textContent=""; doneMsg.textContent="";
+    show("choose");
+  }
+  saveBtn.addEventListener("click", ()=>saveImage(false));
+  againBtn.addEventListener("click", goHome);
+
+  // ---------- 앱 설치 (PWA)
+  let installPrompt=null;
+  window.addEventListener("beforeinstallprompt", e=>{
+    e.preventDefault(); installPrompt=e;
+    $("installBtn").hidden = scr.choose.hidden;
+  });
+  $("installBtn").addEventListener("click", async ()=>{
+    if(!installPrompt) return;
+    installPrompt.prompt();
+    try{ await installPrompt.userChoice; }catch(e){}
+    installPrompt=null; $("installBtn").hidden=true;
+  });
+  window.addEventListener("appinstalled", ()=>{ installPrompt=null; $("installBtn").hidden=true; });
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  }
+
+  // ---------- init
+  builtin=makeBuiltin();
+  if(document.fonts && document.fonts.load){
+    document.fonts.load('96px "Do Hyeon"').then(()=>{ builtin=makeBuiltin(); renderFrames(); }).catch(()=>{});
+  }
+  applyMirror();
+  renderFrames();
+  loadFrames();
+})();
+</script>
+</body>
+</html>
